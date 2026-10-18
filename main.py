@@ -1,45 +1,24 @@
 from fastapi import FastAPI
-from pydantic import BaseModel
-import numpy as np
 
 app = FastAPI(
     title="Mercom Quant API",
-    description="API de calculs quantitatifs et de backtesting pour Mercom",
-    version="1.1.0"
+    description="API de calculs quantitatifs et analyse B2B",
+    version="1.0.0"
 )
 
-class PortfolioData(BaseModel):
-    rendements: list[float]
-    taux_sans_risque: float = 0.02
-
-class BacktestData(BaseModel):
-    prix: list[float]
-    fenetre_courte: int = 5
-    fenetre_longue: int = 20
-
+# Route d'accueil pour supprimer l'erreur Not Found
 @app.get("/")
 def home():
     return {
         "status": "online",
-        "system": "Mercom Engine v1.1"
+        "project": "Mercom Quant API",
+        "docs": "/docs"
     }
 
-@app.post("/api/v1/analyser")
-def analyser_portefeuille(data: PortfolioData):
-    r_array = np.array(data.rendements)
-    rendement_moyen = float(np.mean(r_array))
-    volatilite = float(np.std(r_array))
-    rf = data.taux_sans_risque
-    sharpe_ratio = float((rendement_moyen - rf) / volatilite) if volatilite != 0 else 0.0
-    return {
-        "metrics": {
-            "rendement_moyen_pct": round(rendement_moyen * 100, 2),
-            "volatilite_pct": round(volatilite * 100, 2),
-            "ratio_sharpe": round(sharpe_ratio, 2)
-        },
-        "signal": "ACHAT" if sharpe_ratio > 0.5 else ("VENTE" if sharpe_ratio < 0 else "NEUTRE")
-    }
-
+# Route de vérification d'état
+@app.get("/health")
+def health_check():
+    return {"status": "healthy"}
 @app.post("/api/v1/backtest")
 def executer_backtest(data: BacktestData):
     prices = np.array(data.prix)
